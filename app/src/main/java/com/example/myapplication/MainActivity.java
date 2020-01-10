@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -15,7 +16,7 @@ import android.widget.TextView;
 public class MainActivity extends AppCompatActivity {
 
     AppCompatEditText editText;
-    TextView songName;
+    TextView fileNameText;
     ProgressBar progressBar;
     Uri uriAudio;
 
@@ -25,13 +26,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         editText = (AppCompatEditText) findViewById(R.id.songTitle);
-        songName = (TextView) findViewById(R.id.fileSelectedId);
+        fileNameText = (TextView) findViewById(R.id.fileSelectedId);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
 
 
 
     }
+    //Open Audio files in Phone
     public void openAudioFile(View view){
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("audio/*");
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         if(resultCode == 101 && resultCode == RESULT_OK && data.getData() != null){
             uriAudio = data.getData();
             String fileName  = getFileName(uriAudio);
+            fileNameText.setText(fileName);
         }
     }
 
@@ -52,7 +55,22 @@ public class MainActivity extends AppCompatActivity {
         String result = null;
         if(uriAudio.getScheme().equals("content")){
             Cursor cursor = getContentResolver().query(uriAudio,null,null,null,null);
-
+            try{
+                if(cursor!=null && cursor.moveToFirst()){
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            }finally {
+                cursor.close();
+            }
         }
+        if(result == null){
+            result = uriAudio.getPath();
+            int cut = result.lastIndexOf('/');
+            if(cut!= -1){
+                result = result.substring(cut + 1);
+
+            }
+        }
+        return result;
     }
 }
