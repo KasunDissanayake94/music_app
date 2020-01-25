@@ -18,7 +18,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.StorageTask;
+import com.google.firebase.storage.UploadTask;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar progressBar;
     Uri uriAudio;
     StorageReference mStorageRef;
+    StorageTask storageTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +111,14 @@ public class MainActivity extends AppCompatActivity {
 
             }
             duration = getDurationFromMill(durationMill);
+
+            storageTask = storageReference.putFile(uriAudio)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                        }
+                    });
 
         }
 
