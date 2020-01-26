@@ -18,7 +18,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapplication.model.UploadSong;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
@@ -29,21 +34,24 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    AppCompatEditText editText;
+    AppCompatEditText editTextTitle;
     TextView fileNameText;
     ProgressBar progressBar;
     Uri uriAudio;
     StorageReference mStorageRef;
     StorageTask storageTask;
+    DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        editText = (AppCompatEditText) findViewById(R.id.songTitle);
+        editTextTitle = (AppCompatEditText) findViewById(R.id.songTitle);
         fileNameText = (TextView) findViewById(R.id.fileSelectedId);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        databaseReference = FirebaseDatabase.getInstance().getReference().child("songs");
+        mStorageRef = FirebaseStorage.getInstance().getReference().child("songs");
 
 
 
@@ -60,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == 101 && resultCode == RESULT_OK && data.getData() != null){
+        if(requestCode == 101 && resultCode == RESULT_OK && data.getData() != null){
             uriAudio = data.getData();
             String fileName  = getFileName(uriAudio);
             fileNameText.setText(fileName);
@@ -90,7 +98,8 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private void uploadFileToFirebase(){
+    public void uploadFileToFirebase(View view){
+
         if(fileNameText.getText().toString().equals("No file selected")){
             Toast.makeText(getApplicationContext(),"Please select an File", Toast.LENGTH_LONG).show();
         }else{
@@ -111,15 +120,33 @@ public class MainActivity extends AppCompatActivity {
 
             }
             duration = getDurationFromMill(durationMill);
+            final String finalDuration = duration;
 
             storageTask = storageReference.putFile(uriAudio)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-                        }
-                    });
+                            UploadSong uploadSong = new UploadSong(editTextTitle.getText().toString(),finalDuration,uriAudio.toString());
 
+                            String songId = databaseReference.push().getKey();
+                            databaseReference.child(songId).setValue(uploadSong);
+
+                        }
+                    })
+
+            .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+
+                    double progress = (100.0 * taskSnapshot.getBytesTransferred()/taskSnapshot.getTotalByteCount());
+                    progressBar.setProgress((int)progress);
+
+                }
+            });
+
+        }else{
+            Toast.makeText(getApplicationContext(),"No file selected to Upload!",Toast.LENGTH_LONG).show();
         }
 
     }

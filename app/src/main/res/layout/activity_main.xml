@@ -40,7 +40,8 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Upload Image"
+                android:text="Upload Song"
+                android:onClick="openAudioFile"
                 android:id="@+id/uploadImage">
             </Button>
             <TextView
@@ -67,6 +68,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Upload"
+            android:onClick="uploadFileToFirebase"
             android:layout_marginTop="10dp"
             android:textStyle="bold">
 
